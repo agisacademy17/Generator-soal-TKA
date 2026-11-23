@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKA Math Studio | AI Assessment & LaTeX Generator</title>
+    
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 untuk Rendering Rumus Matematika LaTeX Real-time -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <!-- html2pdf.js untuk Export PDF Langsung -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* Custom Scrollbar & Print Optimizations */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .question-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-200/80 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-square-root-variable text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg tracking-tight text-slate-900">TKA Math Studio</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 rounded-full">Pro AI Engine</span>
+                    </div>
+                    <p class="text-xs text-slate-500 hidden sm:block">Matriks Asesmen Resmi Pusmendik • Stimulus Kontekstual & LaTeX</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="toggleSolutionVisibility()" id="btn-toggle-solutions" class="px-3 py-2 text-xs sm:text-sm font-medium rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-regular fa-eye text-indigo-600"></i>
+                    <span id="toggle-sol-text">Sembunyikan Kunci</span>
+                </button>
+                <button onclick="downloadAllLatex()" id="btn-dl-all-tex" disabled class="px-3 py-2 text-xs sm:text-sm font-medium rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-code text-emerald-600"></i>
+                    <span class="hidden md:inline">Unduh Semua</span>
+                    <span>.TEX</span>
+                </button>
+                <button onclick="exportToPDF()" id="btn-export-pdf" disabled class="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                    <span>Unduh PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT SIDEBAR: Panel Konfigurasi Matriks TKA -->
+        <aside class="lg:col-span-4 space-y-4 lg:sticky lg:top-20 no-print">
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 space-y-4">
+                
+                <!-- Judul Panel -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-sliders"></i>
+                        </span>
+                        <h2 class="font-bold text-slate-900 text-sm">Parameter Penyusunan TKA</h2>
+                    </div>
+                    <span class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Matriks Pusmendik</span>
+                </div>
+
+                <!-- 1. Matriks Asesmen TKA (Elemen, Sub-elemen & Kompetensi) -->
+                <div class="space-y-3 bg-slate-50/90 p-3.5 rounded-xl border border-slate-200/80">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sitemap"></i> Matriks Asesmen TKA
+                        </span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 bg-white text-slate-600 rounded border border-slate-200">SMP / Sederajat</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">1. Elemen / Materi Utama</label>
+                        <select id="elemen-select" onchange="onElemenChange()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <option value="ALL">Semua Elemen Proporsional (1 – 4)</option>
+                            <option value="1">1. Bilangan</option>
+                            <option value="2">2. Aljabar</option>
+                            <option value="3">3. Geometri dan Pengukuran</option>
+                            <option value="4">4. Data dan Peluang</option>
+                        </select>
+                    </div>
+
+                    <div id="subelemen-wrapper">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">2. Sub-Elemen / Submateri</label>
+                        <select id="subelemen-select" onchange="onSubElemenChange()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <!-- Diisi otomatis dari PUSMENDIK_MATRIX -->
+                        </select>
+                    </div>
+
+                    <div id="kompetensi-wrapper" class="hidden">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">3. Cakupan Kompetensi & Batasan</label>
+                        <select id="kompetensi-select" onchange="updateMatrixPreview()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <!-- Diisi otomatis -->
+                        </select>
+                        <div id="batasan-badge" class="hidden mt-2 p-2.5 rounded-lg bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+                            <!-- Catatan/Batasan resmi Pusmendik -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Level & Proses Kognitif (Sesuai Tabel Taksonomi TKA) -->
+                <div class="space-y-2.5 bg-slate-50/90 p-3.5 rounded-xl border border-slate-200/80">
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Level Kognitif TKA</label>
+                        <select id="cognitive-level" onchange="onCognitiveLevelChange()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <option value="ALL">Semua Level (L1, L2 Aplikasi & L3 Penalaran)</option>
+                            <option value="L1">Level 1 — Pengetahuan & Pemahaman</option>
+                            <option value="L2">Level 2 — Aplikasi (Applying)</option>
+                            <option value="L3" selected>Level 3 — Penalaran (Reasoning / HOTS)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Proses Kognitif Spesifik</label>
+                        <select id="cognitive-process" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                            <!-- Diisi otomatis dari COGNITIVE_PROCESSES -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 3. Tema Stimulus Kontekstual & AI Stimulus Agent -->
+                <div class="space-y-2.5">
+                    <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-xl p-3 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="text-[11px] font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-robot text-indigo-600"></i>
+                                <span>AI Agent Tema Stimulus</span>
+                            </label>
+                            <button type="button" onclick="runStimulusAgent()" id="btn-stimulus-agent" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold shadow-xs transition flex items-center gap-1.5 shrink-0">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                <span>Riset Tema Sesuai Matriks</span>
+                            </button>
+                        </div>
+
+                        <input type="text" id="stimulus-topic" value="Transisi Energi Terbarukan, Ekonomi Digital & Demografi Indonesia 2025-2026" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="Klik tombol Riset Tema atau ketik konteks stimulus...">
+
+                        <!-- Hasil Rekomendasi AI Stimulus Agent -->
+                        <div id="agent-suggestions-box" class="hidden space-y-1.5 pt-1">
+                            <div class="flex items-center justify-between text-[10px] font-semibold text-indigo-800">
+                                <span><i class="fa-solid fa-sparkles mr-1"></i>Pilih Rekomendasi Stimulus Tervalidasi Matriks:</span>
+                                <button type="button" onclick="document.getElementById('agent-suggestions-box').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div id="agent-suggestions-list" class="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-0.5">
+                                <!-- Kartu rekomendasi dari AI Agent -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                                Catatan / Naskah Tambahan (Opsional)
+                            </label>
+                            <label for="file-upload" class="text-[11px] font-medium text-indigo-600 hover:text-indigo-700 cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-paperclip"></i> Unggah .txt/.md
+                            </label>
+                            <input id="file-upload" type="file" accept=".txt,.md,.csv,.json" class="hidden" onchange="handleFileUpload(event)">
+                        </div>
+                        <textarea id="tka-reference" rows="2" class="w-full rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition" placeholder="Tambahkan instruksi spesifik guru atau tempelkan kisi-kisi tambahan..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. Distribusi 3 Bentuk Soal -->
+                <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Komposisi Bentuk Soal</span>
+                        <span id="total-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Total: 3 Soal</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <!-- PG Tunggal -->
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/70">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">1. Pilihan Ganda (PG)</div>
+                                <div class="text-[11px] text-slate-500">5 opsi (A–E), 1 jawaban benar</div>
+                            </div>
+                            <input type="number" id="count-pg" min="0" max="10" value="1" onchange="updateTotalCount()" class="w-14 text-center rounded-lg border border-slate-300 py-1 text-sm font-bold text-indigo-600 focus:border-indigo-500 outline-none">
+                        </div>
+
+                        <!-- PG MCMA -->
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/70">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">2. PG Kompleks (MCMA)</div>
+                                <div class="text-[11px] text-slate-500">Multiple Correct Multiple Answer</div>
+                            </div>
+                            <input type="number" id="count-mcma" min="0" max="10" value="1" onchange="updateTotalCount()" class="w-14 text-center rounded-lg border border-slate-300 py-1 text-sm font-bold text-indigo-600 focus:border-indigo-500 outline-none">
+                        </div>
+
+                        <!-- Benar / Salah 3 Pernyataan -->
+                        <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200/70">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">3. Benar / Salah (3 Pernyataan)</div>
+                                <div class="text-[11px] text-slate-500">Analisis kebenaran 3 pernyataan/soal</div>
+                            </div>
+                            <input type="number" id="count-tf" min="0" max="10" value="1" onchange="updateTotalCount()" class="w-14 text-center rounded-lg border border-slate-300 py-1 text-sm font-bold text-indigo-600 focus:border-indigo-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Generate -->
+                <button onclick="generateTKAQuestions()" id="btn-generate" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-200/80 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Susun Paket Soal TKA Sekarang</span>
+                </button>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 text-xs text-indigo-900 space-y-1">
+                <div class="font-bold flex items-center gap-1.5 text-indigo-700">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Riset Fakta Real-Time Aktif</span>
+                </div>
+                <p class="text-indigo-800/80 leading-relaxed">
+                    Sistem menelusuri data faktual terkini untuk membangun stimulus teks, tabel, dan parameter numerik yang akurat secara matematis maupun empiris.
+                </p>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: Pratinjau Naskah Soal, Kunci & LaTeX -->
+        <section class="lg:col-span-8 flex flex-col">
+            
+            <!-- Status / Notification Banner -->
+            <div id="status-banner" class="hidden mb-4 rounded-xl p-4 border flex items-start gap-3 no-print">
+                <i id="status-icon" class="fa-solid fa-circle-info mt-0.5"></i>
+                <div class="flex-1 text-sm" id="status-message"></div>
+                <button onclick="hideStatus()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="flex-1 bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 sm:p-12 flex flex-col items-center justify-center text-center min-h-[520px]">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-file-signature text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Naskah Soal TKA Belum Dibuat</h3>
+                <p class="text-sm text-slate-500 max-w-md mb-6 leading-relaxed">
+                    Lengkapi parameter TKA di panel kiri, tempelkan kisi-kisi naskah jika ada, lalu klik <strong>"Susun Paket Soal TKA Sekarang"</strong> untuk menghasilkan soal lengkap dengan stimulus terkini, pembahasan, dan kode LaTeX.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <div class="text-xs font-bold text-indigo-600 mb-0.5">3 Tipe Soal TKA</div>
+                        <div class="text-[11px] text-slate-500">PG Tunggal, PG MCMA, & Benar-Salah 3 Pernyataan</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <div class="text-xs font-bold text-emerald-600 mb-0.5">Kode LaTeX Siap Pakai</div>
+                        <div class="text-[11px] text-slate-500">Unduh file .tex per butir soal maupun paket utuh</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <div class="text-xs font-bold text-amber-600 mb-0.5">Export PDF Ujian</div>
+                        <div class="text-[11px] text-slate-500">Layout rapi dengan rendering persamaan MathJax</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="loading-state" class="hidden flex-1 bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center justify-center text-center min-h-[520px]">
+                <div class="relative w-16 h-16 mb-5">
+                    <div class="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-indigo-600">
+                        <i class="fa-solid fa-atom text-xl"></i>
+                    </div>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 mb-1" id="loading-title">Menelusuri Fakta Terkini & Merancang Stimulus...</h3>
+                <p class="text-xs text-slate-500 max-w-md" id="loading-subtitle">
+                    AI sedang memverifikasi ketepatan matematis, menyusun pengecoh (distractor) logis, dan memformat notasi LaTeX standar TKA.
+                </p>
+            </div>
+
+            <!-- Generated Exam Document Container -->
+            <div id="exam-container" class="hidden space-y-5">
+                
+                <!-- Grounding Sources Bar -->
+                <div id="sources-bar" class="hidden bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 text-xs no-print">
+                    <div class="font-bold text-emerald-800 flex items-center gap-1.5 mb-1.5">
+                        <i class="fa-solid fa-check-circle text-emerald-600"></i>
+                        <span>Referensi Fakta Terkini yang Digunakan dalam Stimulus:</span>
+                    </div>
+                    <div id="sources-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Printable Exam Sheet -->
+                <div id="printable-area" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10 space-y-8">
+                    
+                    <!-- Kop Naskah Soal -->
+                    <div class="border-b-2 border-slate-900 pb-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <span class="inline-block px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest rounded">
+                                NASKAH SOAL TES KEMAMPUAN AKADEMIK (TKA) — PUSMENDIK
+                            </span>
+                            <span id="exam-date-meta" class="text-xs font-mono text-slate-500"></span>
+                        </div>
+                        <h2 id="exam-header-title" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                            MATA UJI: MATEMATIKA
+                        </h2>
+                        <div id="exam-header-meta" class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200/70">
+                            <!-- Filled dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Daftar Butir Soal -->
+                    <div id="questions-list" class="space-y-8">
+                        <!-- Questions injected here -->
+                    </div>
+
+                    <!-- Footer Dokumen -->
+                    <div class="pt-6 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>Disusun menggunakan TKA Math Studio AI • Standar Asesmen Kontekstual</span>
+                        <span>Halaman Dokumen Resmi</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal Pratinjau Kode LaTeX Per Soal -->
+    <div id="latex-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full overflow-hidden flex flex-col max-h-[88vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-mono font-bold text-xs">TeX</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm" id="modal-latex-title">Kode LaTeX Butir Soal</h3>
+                        <p class="text-[11px] text-slate-500">Siap kompilasi di Overleaf, TeXstudio, atau MiKTeX</p>
+                    </div>
+                </div>
+                <button onclick="closeLatexModal()" class="w-8 h-8 rounded-lg hover:bg-slate-200/70 text-slate-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto flex-1 bg-slate-900">
+                <pre id="modal-latex-code" class="font-mono text-xs text-emerald-300 whitespace-pre-wrap leading-relaxed select-all"></pre>
+            </div>
+
+            <div class="px-5 py-3.5 border-t border-slate-100 bg-white flex items-center justify-between gap-3">
+                <span id="copy-feedback" class="text-xs font-medium text-emerald-600 opacity-0 transition">
+                    <i class="fa-solid fa-check mr-1"></i> Kode LaTeX berhasil disalin ke clipboard!
+                </span>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyModalLatex()" class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Salin Kode
+                    </button>
+                    <button onclick="downloadModalLatex()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-download"></i> Unduh File .TEX
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // BASIS PENGETAHUAN RESMI: MATRIKS ASESMEN TKA MATEMATIKA (PUSMENDIK)
+        // Diekstrak lengkap dari naskah resmi yang dilampirkan pengguna
+        // =========================================================================
+        const PUSMENDIK_MATRIX = {
+            "1": {
+                name: "Bilangan",
+                subElements: {
+                    "Bilangan Real": {
+                        competencies: [
+                            "Perbandingan dan sifat-sifat bilangan",
+                            "Operasi aritmetika pada bilangan",
+                            "Estimasi/perkiraan hasil perhitungan",
+                            "Faktorisasi prima bilangan asli",
+                            "Rasio (skala, proporsi, dan laju perubahan)",
+                            "Perbandingan senilai dan berbalik nilai"
+                        ],
+                        constraint: "Bilangan mencakup bilangan bulat, bilangan rasional dan irasional, bilangan berpangkat bulat, bilangan akar, dan bilangan dalam notasi ilmiah."
+                    }
+                }
+            },
+            "2": {
+                name: "Aljabar",
+                subElements: {
+                    "Persamaan dan Pertidaksamaan Linier": {
+                        competencies: [
+                            "Persamaan linear satu variabel",
+                            "Pertidaksamaan linear satu variabel",
+                            "Sistem persamaan linear dua variabel (SPLDV)"
+                        ],
+                        constraint: "Permasalahan kontekstual yang dimodelkan ke dalam PLSV, PtLSV, atau SPLDV."
+                    },
+                    "Bentuk Aljabar": {
+                        competencies: [
+                            "Bentuk aljabar dan sifat-sifat operasinya (komutatif, asosiatif, dan distributif)"
+                        ],
+                        constraint: "Penyederhanaan, pemfaktoran, dan manipulasi ekspresi aljabar menggunakan sifat komutatif, asosiatif, dan distributif."
+                    },
+                    "Fungsi": {
+                        competencies: [
+                            "Relasi dan fungsi (domain, kodomain, range), serta penyajiannya"
+                        ],
+                        constraint: "Penyajian fungsi meliputi diagram panah, himpunan pasangan berurutan, grafik kartesius, tabel, dan rumus fungsi."
+                    },
+                    "Barisan dan Deret": {
+                        competencies: [
+                            "Barisan berhingga bilangan",
+                            "Deret berhingga bilangan"
+                        ],
+                        constraint: "Pola bilangan, barisan aritmetika/geometri berhingga, serta jumlah n suku pertama deret berhingga."
+                    }
+                }
+            },
+            "3": {
+                name: "Geometri dan Pengukuran",
+                subElements: {
+                    "Objek Geometri": {
+                        competencies: [
+                            "Hubungan antar-sudut yang terbentuk oleh dua garis yang berpotongan, dan oleh dua garis sejajar yang dipotong suatu garis transversal (termasuk penentuan besar sudut dalam segitiga)",
+                            "Teorema Pythagoras",
+                            "Kekongruenan dan kesebangunan bangun datar",
+                            "Jaring-jaring bangun ruang (prisma, tabung, limas, dan kerucut)"
+                        ],
+                        constraint: "Analisis sifat geometris, pembuktian kesebangunan/kekongruenan, serta representasi jaring-jaring bangun ruang sisi datar dan sisi lengkung."
+                    },
+                    "Transformasi Geometri": {
+                        competencies: [
+                            "Transformasi tunggal (refleksi, translasi, rotasi, dan dilatasi) terhadap titik, garis, dan bangun datar pada bidang"
+                        ],
+                        constraint: "Fokus pada transformasi tunggal (bukan komposisi beruntun) pada bidang koordinat Kartesius."
+                    },
+                    "Pengukuran": {
+                        competencies: [
+                            "Keliling dan luas bangun datar (daerah segi banyak dan daerah lingkaran, serta daerah gabungannya)",
+                            "Volume bangun ruang (prisma, limas, dan bola)"
+                        ],
+                        constraint: "Meliputi bangun datar gabungan (segi banyak & lingkaran) serta bangun ruang prisma, limas, dan bola."
+                    }
+                }
+            },
+            "4": {
+                name: "Data dan Peluang",
+                subElements: {
+                    "Data": {
+                        competencies: [
+                            "Perumusan pertanyaan untuk mendapatkan data, serta penyajian, dan penginterpretasian data",
+                            "Penentuan dan penaksiran rerata (mean), median, modus, dan jangkauan (range) dari data",
+                            "Perbandingan ukuran pemusatan dan ukuran penyebaran beberapa kelompok data"
+                        ],
+                        constraint: "Penyajian data meliputi: diagram batang, diagram garis, diagram lingkaran, dan tabel."
+                    },
+                    "Peluang": {
+                        competencies: [
+                            "Peluang dan frekuensi relatif dari kejadian tunggal"
+                        ],
+                        constraint: "Fokus pada ruang sampel, peluang teoretik, dan frekuensi relatif percobaan dari kejadian tunggal."
+                    }
+                }
+            }
+        };
+
+        const COGNITIVE_PROCESSES = {
+            "ALL": [
+                { value: "PROPORSIONAL", label: "Proporsional Lengkap (L1 Pemahaman, L2 Aplikasi, L3 Penalaran)" }
+            ],
+            "L1": [
+                { value: "L1-ALL", label: "Semua Proses L1 (Mengingat, Mengidentifikasi, Menghitung Rutin)" },
+                { value: "L1-IDENTIFIKASI", label: "Mengidentifikasi fakta, konsep, sifat, dan prosedur matematika dasar" }
+            ],
+            "L2": [
+                { value: "L2-ALL", label: "Semua Proses L2 (Memodelkan, Mengaplikasikan, Menginterpretasikan)" },
+                { value: "L2-MEMODELKAN", label: "Memodelkan: Memodelkan permasalahan kontekstual ke dalam kalimat matematika" },
+                { value: "L2-MENGAPLIKASIKAN", label: "Mengaplikasikan: Menerapkan strategi & operasi matematis pada prosedur rutin" },
+                { value: "L2-MENGINTERPRETASIKAN", label: "Menginterpretasikan: Memahami & menjelaskan makna situasi, pernyataan, atau representasi matematika" }
+            ],
+            "L3": [
+                { value: "L3-ALL", label: "Semua Proses L3 (Menganalisis, Memecahkan Masalah, Mengevaluasi, Menyimpulkan, Generalisasi)" },
+                { value: "L3-MENGANALISIS", label: "Menganalisis: Menentukan, menjelaskan, dan menggunakan hubungan beberapa konsep/fakta/prosedur" },
+                { value: "L3-MEMECAHKAN", label: "Memecahkan Masalah: Mengaitkan berbagai konsep & representasi dalam situasi baru/non-rutin" },
+                { value: "L3-MENGEVALUASI", label: "Mengevaluasi: Mengevaluasi alternatif strategi dan solusi dari suatu pemecahan masalah" },
+                { value: "L3-MENYIMPULKAN", label: "Menyimpulkan: Menarik kesimpulan valid dari informasi, data, atau bukti menggunakan konsep matematika" },
+                { value: "L3-GENERALISASI", label: "Melakukan Generalisasi: Menyusun pernyataan matematis yang menggambarkan hubungan yang lebih umum" }
+            ]
+        };
+
+        // =========================================================================
+        // STATE MANAGEMENT & GLOBAL VARIABLES
+        // =========================================================================
+        let generatedQuestions = [];
+        let showSolutions = true;
+        let currentModalQuestionIndex = null;
+
+        // Inisialisasi Dropdown Matriks saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            onElemenChange();
+            onCognitiveLevelChange();
+        });
+
+        function onElemenChange() {
+            const elemenKey = document.getElementById('elemen-select').value;
+            const subSelect = document.getElementById('subelemen-select');
+            const compWrapper = document.getElementById('kompetensi-wrapper');
+
+            subSelect.innerHTML = '';
+
+            if (elemenKey === 'ALL') {
+                subSelect.innerHTML = `<option value="ALL">Semua Sub-Elemen (Bilangan, Aljabar, Geometri, Data & Peluang)</option>`;
+                compWrapper.classList.add('hidden');
+                return;
+            }
+
+            const subElements = PUSMENDIK_MATRIX[elemenKey].subElements;
+            subSelect.innerHTML = `<option value="ALL">Semua Sub-Elemen pada ${PUSMENDIK_MATRIX[elemenKey].name}</option>`;
+            Object.keys(subElements).forEach(subKey => {
+                const opt = document.createElement('option');
+                opt.value = subKey;
+                opt.textContent = subKey;
+                subSelect.appendChild(opt);
+            });
+
+            onSubElemenChange();
+        }
+
+        function onSubElemenChange() {
+            const elemenKey = document.getElementById('elemen-select').value;
+            const subKey = document.getElementById('subelemen-select').value;
+            const compWrapper = document.getElementById('kompetensi-wrapper');
+            const compSelect = document.getElementById('kompetensi-select');
+            const batasanBadge = document.getElementById('batasan-badge');
+
+            if (elemenKey === 'ALL' || subKey === 'ALL') {
+                compWrapper.classList.add('hidden');
+                return;
+            }
+
+            const subData = PUSMENDIK_MATRIX[elemenKey].subElements[subKey];
+            compSelect.innerHTML = `<option value="ALL">Semua Indikator Kompetensi (${subData.competencies.length} Cakupan)</option>`;
+            subData.competencies.forEach((comp, i) => {
+                const opt = document.createElement('option');
+                opt.value = comp;
+                opt.textContent = `${i + 1}. ${comp}`;
+                compSelect.appendChild(opt);
+            });
+
+            if (subData.constraint) {
+                batasanBadge.innerHTML = `<strong class="font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i>Batasan/Catatan Pusmendik:</strong> ${subData.constraint}`;
+                batasanBadge.classList.remove('hidden');
+            } else {
+                batasanBadge.classList.add('hidden');
+            }
+
+            compWrapper.classList.remove('hidden');
+        }
+
+        function updateMatrixPreview() {
+            // Reset kotak saran agent jika indikator kompetensi diganti agar tetap sinkron
+            const box = document.getElementById('agent-suggestions-box');
+            if (box) box.classList.add('hidden');
+        }
+
+        function onCognitiveLevelChange() {
+            const levelEl = document.getElementById('cognitive-level');
+            const procSelect = document.getElementById('cognitive-process');
+            if (!levelEl || !procSelect) return;
+
+            const levelKey = levelEl.value;
+            const list = COGNITIVE_PROCESSES[levelKey] || COGNITIVE_PROCESSES["ALL"];
+
+            procSelect.innerHTML = '';
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.value;
+                opt.textContent = item.label;
+                procSelect.appendChild(opt);
+            });
+        }
+
+        function updateTotalCount() {
+            const pg = Math.max(0, parseInt(document.getElementById('count-pg')?.value) || 0);
+            const mcma = Math.max(0, parseInt(document.getElementById('count-mcma')?.value) || 0);
+            const tf = Math.max(0, parseInt(document.getElementById('count-tf')?.value) || 0);
+            const badge = document.getElementById('total-count-badge');
+            if (badge) badge.textContent = `Total: ${pg + mcma + tf} Soal`;
+        }
+
+        function toggleSolutionVisibility() {
+            showSolutions = !showSolutions;
+            document.querySelectorAll('.solution-box').forEach(el => {
+                el.classList.toggle('hidden', !showSolutions);
+            });
+            const label = document.getElementById('toggle-sol-text');
+            if (label) label.textContent = showSolutions ? 'Sembunyikan Kunci' : 'Tampilkan Kunci';
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const refArea = document.getElementById('tka-reference');
+                if (refArea) {
+                    refArea.value = e.target.result;
+                    showStatus(`File referensi <strong>${file.name}</strong> berhasil dimuat.`, 'success');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function showStatus(htmlMsg, type = 'info') {
+            const banner = document.getElementById('status-banner');
+            const icon = document.getElementById('status-icon');
+            const msgEl = document.getElementById('status-message');
+            if (!banner || !icon || !msgEl) return;
+
+            banner.className = 'mb-4 rounded-xl p-4 border flex items-start gap-3 no-print ';
+            if (type === 'error') {
+                banner.className += 'bg-rose-50 border-rose-200 text-rose-800';
+                icon.className = 'fa-solid fa-circle-exclamation text-rose-600 mt-0.5';
+            } else if (type === 'success') {
+                banner.className += 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                icon.className = 'fa-solid fa-circle-check text-emerald-600 mt-0.5';
+            } else {
+                banner.className += 'bg-indigo-50 border-indigo-200 text-indigo-800';
+                icon.className = 'fa-solid fa-circle-info text-indigo-600 mt-0.5';
+            }
+            msgEl.innerHTML = htmlMsg;
+            banner.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            const banner = document.getElementById('status-banner');
+            if (banner) banner.classList.add('hidden');
+        }
+
+        // =========================================================================
+        // AI STIMULUS RESEARCH AGENT (PENCARI TEMA SESUAI MATRIKS ASESMEN)
+        // =========================================================================
+        function getCurrentMatrixContext() {
+            const elemenKey = document.getElementById('elemen-select').value;
+            const subKey = document.getElementById('subelemen-select').value;
+            const compVal = document.getElementById('kompetensi-select')?.value || 'ALL';
+            const cogLevelKey = document.getElementById('cognitive-level').value;
+            const cogProcSelect = document.getElementById('cognitive-process');
+            const cogProcLabel = cogProcSelect.options[cogProcSelect.selectedIndex]?.text || '';
+
+            let matrixSpecText = "";
+            let displayDomain = "";
+
+            if (elemenKey === "ALL") {
+                displayDomain = "Campuran 4 Elemen Matriks Pusmendik";
+                matrixSpecText = `Distribusi proporsional dari 4 Elemen Matriks Asesmen TKA Pusmendik:
+1. Bilangan (Bilangan Real: perbandingan & sifat bilangan, operasi aritmetika, estimasi hasil hitung, faktorisasi prima, rasio/skala/proporsi/laju perubahan, perbandingan senilai & berbalik nilai. Batasan: bulat, rasional, irasional, berpangkat bulat, akar, notasi ilmiah).
+2. Aljabar (PLSV, PtLSV, SPLDV; Bentuk aljabar & sifat komutatif/asosiatif/distributif; Relasi & fungsi domain/kodomain/range serta penyajiannya; Barisan & deret berhingga bilangan).
+3. Geometri & Pengukuran (Hubungan antar-sudut garis berpotongan & garis sejajar dipotong transversal termasuk sudut segitiga, Teorema Pythagoras, Kekongruenan & kesebangunan bangun datar, Jaring-jaring prisma/tabung/limas/kerucut; Transformasi tunggal refleksi/translasi/rotasi/dilatasi pada titik/garis/bangun datar; Keliling & luas bangun datar segi banyak, lingkaran & gabungannya; Volume prisma, limas, dan bola).
+4. Data & Peluang (Perumusan pertanyaan, penyajian & interpretasi data pada diagram batang/garis/lingkaran/tabel; Penentuan & penaksiran mean, median, modus, range; Perbandingan ukuran pemusatan & penyebaran beberapa kelompok data; Peluang dan frekuensi relatif kejadian tunggal).`;
+            } else {
+                const elObj = PUSMENDIK_MATRIX[elemenKey];
+                displayDomain = elObj.name;
+                if (subKey === "ALL") {
+                    matrixSpecText = `Elemen Utama: ${elObj.name}.\nCakupan Sub-Elemen & Batasan Resmi Pusmendik:\n` +
+                        Object.entries(elObj.subElements).map(([sName, sData]) =>
+                            `- Sub-Elemen "${sName}": Kompetensi (${sData.competencies.join('; ')}). Batasan/Catatan: ${sData.constraint}`
+                        ).join('\n');
+                } else {
+                    const sData = elObj.subElements[subKey];
+                    displayDomain = `${elObj.name} (${subKey})`;
+                    const selectedComps = compVal === "ALL" ? sData.competencies.join('; ') : compVal;
+                    matrixSpecText = `Elemen Utama: ${elObj.name}
+Sub-Elemen Spesifik: ${subKey}
+Cakupan Kompetensi yang Diujikan: ${selectedComps}
+BATASAN & CATATAN RESMI PUSMENDIK: ${sData.constraint}`;
+                }
+            }
+
+            return {
+                elemenKey,
+                subKey,
+                compVal,
+                cogLevelKey,
+                cogProcLabel,
+                matrixSpecText,
+                displayDomain
+            };
+        }
+
+        async function runStimulusAgent() {
+            const btn = document.getElementById('btn-stimulus-agent');
+            const box = document.getElementById('agent-suggestions-box');
+            const list = document.getElementById('agent-suggestions-list');
+            const originalHTML = btn.innerHTML;
+
+            const ctx = getCurrentMatrixContext();
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Meriset Fakta...</span>`;
+            box.classList.remove('hidden');
+            list.innerHTML = `
+                <div class="p-3 rounded-lg bg-white border border-indigo-100 text-[11px] text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-satellite-dish text-indigo-600 animate-pulse"></i>
+                    <span>AI Agent sedang menelusuri data faktual terbaru 2025–2026 yang cocok untuk <strong>${ctx.displayDomain}</strong>...</span>
+                </div>
+            `;
+
+            const agentSystemPrompt = `Anda adalah AI Research Agent spesialis perancangan stimulus soal Asesmen Nasional / TKA Matematika (Pusmendik).
+Tugas Anda:
+1. Gunakan Google Search untuk mencari 4 fakta/fenomena/data terbaru yang nyata (Indonesia maupun Global tahun 2025–2026) yang sangat alami dan kaya angka untuk dijadikan stimulus soal matematika.
+2. Setiap rekomendasi tema WAJIB selaras 100% dengan Elemen, Sub-Elemen, Kompetensi, dan Batasan Matriks Pusmendik yang diberikan user.
+3. Jelaskan secara ringkas mengapa data tersebut cocok dimodelkan ke dalam konsep matematika pada matriks tersebut (misal: laju perubahan, SPLDV, luas gabungan/volume bangun ruang, atau tabel/grafik statistika & frekuensi relatif).
+4. Keluarkan HANYA JSON valid dengan format:
+{
+  "recommendations": [
+    {
+      "topicTitle": "Judul Singkat & Spesifik Stimulus (misal: Target Kapasitas PLTS Atap Nasional & Tarif Listrik 2026)",
+      "factualHook": "Ringkasan angka/fakta aktual hasil penelusuran (1-2 kalimat)",
+      "mathAlignment": "Kaitan langsung dengan indikator kompetensi & tipe visual (Tabel/Grafik/Geometri)",
+      "recommendedVisual": "Tabel Data / Diagram Batang / Diagram Garis / Sketsa Geometri"
+    }
+  ]
+}`;
+
+            const agentUserQuery = `Carikan 4 rekomendasi tema stimulus kontekstual berbasis fakta terbaru (2025-2026) untuk penyusunan soal TKA Matematika dengan spesifikasi Matriks Asesmen berikut:
+
+=== PARAMETER MATRIKS ASESMEN ===
+${ctx.matrixSpecText}
+
+=== TARGET KOGNITIF ===
+- Level: ${ctx.cogLevelKey}
+- Proses Kognitif: ${ctx.cogProcLabel}
+
+Pastikan keempat tema memiliki variasi konteks yang menarik (misal: sains/teknologi, ekonomi/keuangan, lingkungan/energi, transportasi/infrastruktur, atau olahraga) dan memuat data kuantitatif yang akurat.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: agentUserQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: agentSystemPrompt }] },
+                    generationConfig: { temperature: 0.5 }
+                };
+
+                const result = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                const parsed = extractAndParseJSON(rawText);
+                const recs = parsed?.recommendations || [];
+
+                if (recs.length === 0) {
+                    throw new Error("Agent tidak menemukan rekomendasi tema.");
+                }
+
+                list.innerHTML = recs.map((r, i) => `
+                    <button type="button" onclick="applyRecommendedStimulus(${i})" data-topic="${encodeURIComponent(r.topicTitle + ' — ' + r.factualHook)}" id="rec-item-${i}" class="w-full text-left p-2.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-400 transition group space-y-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-[11px] font-bold text-slate-900 group-hover:text-indigo-700 leading-snug">${i + 1}. ${r.topicTitle}</span>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">${r.recommendedVisual || 'Kontekstual'}</span>
+                        </div>
+                        <p class="text-[10.5px] text-slate-600 leading-relaxed">${r.factualHook}</p>
+                        <div class="text-[10px] font-medium text-emerald-700 flex items-center gap-1">
+                            <i class="fa-solid fa-check-double"></i>
+                            <span>${r.mathAlignment}</span>
+                        </div>
+                    </button>
+                `).join('');
+
+                // Otomatis terapkan rekomendasi pertama jika input masih default
+                if (recs[0]) {
+                    document.getElementById('stimulus-topic').value = `${recs[0].topicTitle} — ${recs[0].factualHook}`;
+                }
+
+            } catch (err) {
+                console.error("Stimulus Agent Error:", err);
+                list.innerHTML = `
+                    <div class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-700">
+                        Gagal menjalankan riset tema otomatis: ${err.message}. Anda tetap dapat mengetik tema secara manual.
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        function applyRecommendedStimulus(index) {
+            const btnEl = document.getElementById(`rec-item-${index}`);
+            if (!btnEl) return;
+            const fullTopic = decodeURIComponent(btnEl.getAttribute('data-topic'));
+            const inputEl = document.getElementById('stimulus-topic');
+            inputEl.value = fullTopic;
+
+            // Highlight kartu terpilih
+            document.querySelectorAll('[id^="rec-item-"]').forEach(el => {
+                el.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50/70');
+            });
+            btnEl.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50/70');
+            showStatus('Tema stimulus dari AI Agent telah diterapkan dan disinkronkan dengan Matriks Asesmen.', 'success');
+        }
+
+        // =========================================================================
+        // GEMINI API INTEGRATION WITH GOOGLE SEARCH GROUNDING & RETRY LOGIC
+        // =========================================================================
+        async function fetchWithBackoff(url, options, maxRetries = 4) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (err) {
+                    if (i === maxRetries - 1) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        async function generateTKAQuestions() {
+            const countPG = parseInt(document.getElementById('count-pg').value) || 0;
+            const countMCMA = parseInt(document.getElementById('count-mcma').value) || 0;
+            const countTF = parseInt(document.getElementById('count-tf').value) || 0;
+            const totalQuestions = countPG + countMCMA + countTF;
+
+            if (totalQuestions === 0) {
+                showStatus('Harap tentukan minimal 1 butir soal pada salah satu bentuk soal.', 'error');
+                return;
+            }
+            if (totalQuestions > 15) {
+                showStatus('Untuk menjaga kedalaman stimulus dan akurasi matematis, maksimal 15 soal per sesi pembuatan.', 'error');
+                return;
+            }
+
+            const ctx = getCurrentMatrixContext();
+            const cogLevelKey = ctx.cogLevelKey;
+            const cogProcLabel = ctx.cogProcLabel;
+            const matrixSpecText = ctx.matrixSpecText;
+            const displayDomain = ctx.displayDomain;
+            const referenceText = document.getElementById('tka-reference').value.trim();
+            const stimulusTopic = document.getElementById('stimulus-topic').value.trim() || 'Isu Terkini Indonesia & Global 2025-2026';
+
+            // Update UI States
+            hideStatus();
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('exam-container').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('btn-generate').disabled = true;
+
+            const systemPrompt = `Anda adalah tim ahli gabungan: Asesor Pusat Asesmen Pendidikan (Pusmendik), Dosen & Guru Matematika Profesional, Penyusun Soal Nasional TKA (Tes Kemampuan Akademik), dan Spesialis LaTeX.
+Tugas Anda adalah menyusun paket soal TKA Matematika yang 100% selaras dengan MATRIKS ASESMEN TKA PUSMENDIK dan menggunakan STIMULUS KONTEKSTUAL BERBASIS FAKTA TERBARU (tahun 2025-2026) hasil penelusuran.
+
+PEDOMAN TAKSONOMI KOGNITIF TKA PUSMENDIK:
+- Level 1 (Pengetahuan & Pemahaman): Mengingat, mengidentifikasi, dan menerapkan prosedur rutin dasar.
+- Level 2 (Aplikasi / Applying):
+  1) Memodelkan: Memodelkan permasalahan kontekstual terkait cakupan sub-elemen ke dalam kalimat matematika.
+  2) Mengaplikasikan: Mengaplikasikan strategi dan operasi matematika (operasi hitung, aljabar, dll) untuk menyelesaikan permasalahan yang melibatkan konsep dan prosedur matematis yang familiar dan rutin.
+  3) Menginterpretasikan: Memahami dan menjelaskan makna dari berbagai situasi, kejadian, pernyataan, representasi, atau masalah matematika.
+- Level 3 (Penalaran / Reasoning):
+  1) Menganalisis: Menentukan, menjelaskan, dan menggunakan hubungan beberapa konsep, fakta, prinsip, atau prosedur matematika dalam cakupan sub-elemen.
+  2) Memecahkan masalah: Mengaitkan beberapa konsep, fakta, prinsip, prosedur, dan representasi matematika dalam cakupan sub-elemen untuk menyelesaikan permasalahan dalam situasi baru atau konteks yang tidak rutin.
+  3) Mengevaluasi: Mengevaluasi alternatif strategi dan solusi dari suatu pemecahan masalah.
+  4) Menyimpulkan: Menarik kesimpulan yang valid dari informasi, data, atau bukti yang diberikan menggunakan konsep, fakta, prinsip, dan prosedur matematika.
+  5) Melakukan generalisasi: Menyusun pernyataan matematis yang menggambarkan hubungan yang lebih umum terkait konsep, fakta, prinsip, dan prosedur dalam cakupan sub-elemen.
+
+ATURAN WAJIB FORMAT & STRUKTUR:
+1. Setiap soal WAJIB mematuhi "Batasan/Catatan Pusmendik" yang diberikan (misal: jika Transformasi Geometri hanya transformasi tunggal, JANGAN membuat komposisi transformasi; jika Peluang hanya kejadian tunggal, JANGAN membuat peluang majemuk bersyarat; jika Volume bangun ruang hanya prisma, limas, dan bola, patuhi batasan tersebut).
+2. Setiap soal WAJIB memiliki stimulus kontekstual kaya data (narasi faktual terkini, tabel data, atau skenario nyata) yang relevan dengan tema dan parameter TKA.
+3. Gunakan notasi matematika LaTeX yang valid di dalam teks dengan pembatas $...$ untuk inline math dan $$...$$ untuk display math. Pastikan backslash pada JSON di-escape dengan benar (misal: \\\\frac{a}{b}, \\\\sqrt{x}, \\\\times).
+4. Ada 3 bentuk soal wajib sesuai jumlah yang diminta:
+   - Tipe "PG": Pilihan Ganda Tunggal dengan tepat 5 opsi (A, B, C, D, E) dan 1 kunci jawaban benar.
+   - Tipe "MCMA": Pilihan Ganda Kompleks (Multiple Correct Multiple Answer) dengan 5 opsi (A, B, C, D, E), di mana terdapat LEBIH DARI SATU jawaban benar (misal 2 atau 3 opsi benar).
+   - Tipe "BS3": Benar / Salah dengan TEPAT 3 PERNYATAAN per soal. Peserta diminta menentukan status Benar atau Salah untuk masing-masing dari 3 pernyataan tersebut berdasarkan analisis stimulus.
+5. Anda HARUS mengeluarkan output HANYA berupa JSON valid (tanpa teks pembuka/penutup di luar blok JSON) dengan struktur persis berikut:
+{
+  "examTitle": "Judul Paket Soal TKA Matematika",
+  "questions": [
+    {
+      "number": 1,
+      "type": "PG", // harus salah satu dari: "PG", "MCMA", "BS3"
+      "domain": "Elemen - Sub-Elemen (misal: Data dan Peluang - Peluang)",
+      "cognitiveLevel": "Level & Proses Kognitif (misal: L3 Penalaran - Menyimpulkan)",
+      "competencyIndicator": "Indikator kompetensi spesifik dari matriks Pusmendik yang diukur",
+      "stimulusTitle": "Judul Stimulus Kontekstual",
+      "stimulusContent": "Teks narasi stimulus kontekstual dengan data faktual terbaru dan rumus LaTeX $...$. JANGAN masukkan tabel markdown |...| ke sini, gunakan properti stimulusTable!",
+      "stimulusTable": {
+        "caption": "Judul Tabel (opsional, isi null jika tidak ada tabel)",
+        "headers": ["Kolom 1", "Kolom 2", "Kolom 3"],
+        "rows": [
+          ["Data A1", "Data B1", "Data C1"],
+          ["Data A2", "Data B2", "Data C2"]
+        ]
+      }, // Isi null jika stimulus tidak membutuhkan tabel
+      "stimulusChart": {
+        "type": "bar", // pilih: "bar" (diagram batang), "line" (diagram garis), "pie" (diagram lingkaran), atau "none"
+        "title": "Judul Grafik / Diagram",
+        "xAxisLabel": "Label Sumbu X / Kategori",
+        "yAxisLabel": "Label Sumbu Y / Satuan",
+        "labels": ["2022", "2023", "2024", "2025"],
+        "values": [42, 58, 71, 89],
+        "unit": "%"
+      }, // Isi {"type": "none"} jika soal tidak memerlukan grafik, atau isi data grafik jika domain Data/Fungsi/Aljabar membutuhkan visualisasi grafik yang rapi!
+      "questionStem": "Pokok pertanyaan yang jelas dan terukur dengan notasi LaTeX $...$",
+      "options": [
+        {"label": "A", "text": "Opsi A dengan LaTeX"},
+        {"label": "B", "text": "Opsi B"},
+        {"label": "C", "text": "Opsi C"},
+        {"label": "D", "text": "Opsi D"},
+        {"label": "E", "text": "Opsi E"}
+      ], // Diisi 5 opsi untuk PG dan MCMA. Kosongkan [] jika type === "BS3"
+      "statements": [
+        {"no": 1, "text": "Pernyataan 1 dengan LaTeX", "answer": "Benar"},
+        {"no": 2, "text": "Pernyataan 2 dengan LaTeX", "answer": "Salah"},
+        {"no": 3, "text": "Pernyataan 3 dengan LaTeX", "answer": "Benar"}
+      ], // Diisi tepat 3 pernyataan jika type === "BS3". Kosongkan [] jika PG atau MCMA
+      "correctAnswer": "C", // Untuk PG: misal "C". Untuk MCMA: misal "A, C, D". Untuk BS3: misal "Benar - Salah - Benar"
+      "explanation": "Pembahasan matematis langkah demi langkah yang sangat rinci, sistematis, menggunakan LaTeX $...$ dan $$...$$"
+    }
+  ]
+}`;
+
+            const userQuery = `Susun paket soal TKA Matematika sesuai Matriks Asesmen Pusmendik berikut:
+
+=== SPESIFIKASI MATRIKS ASESMEN TKA PUSMENDIK ===
+${matrixSpecText}
+
+=== TARGET LEVEL & PROSES KOGNITIF ===
+- Level Kognitif: ${cogLevelKey === 'ALL' ? 'Kombinasi L1, L2 (Aplikasi), dan L3 (Penalaran)' : cogLevelKey}
+- Proses Kognitif Spesifik: ${cogProcLabel}
+
+=== STIMULUS & KOMPOSISI SOAL ===
+- Tema Stimulus & Fakta Terkini yang Harus Diriset: ${stimulusTopic}
+- Komposisi Jumlah Soal (Total ${totalQuestions} soal):
+  1. Pilihan Ganda Tunggal (PG): ${countPG} soal
+  2. Pilihan Ganda Kompleks MCMA (MCMA): ${countMCMA} soal
+  3. Benar / Salah 3 Pernyataan per soal (BS3): ${countTF} soal
+
+${referenceText ? `=== INSTRUKSI / NASKAH TAMBAHAN DARI PENGGUNA ===\n"""\n${referenceText}\n"""` : ''}
+
+Lakukan pencarian fakta terbaru terkait "${stimulusTopic}" terlebih dahulu agar angka, tren, atau konteks di dalam stimulus benar-benar aktual dan otentik. Pastikan setiap butir soal mencantumkan indikator kompetensi yang diujikan dan diverifikasi 100% akurat secara matematis.`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    generationConfig: {
+                        temperature: 0.4
+                    }
+                };
+
+                const result = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const candidate = result.candidates?.[0];
+                const rawText = candidate?.content?.parts?.[0]?.text || "";
+
+                // Extract Grounding Metadata Sources
+                let sources = [];
+                const attributions = candidate?.groundingMetadata?.groundingAttributions || [];
+                sources = attributions
+                    .map(a => ({ uri: a.web?.uri, title: a.web?.title }))
+                    .filter(s => s.uri && s.title);
+
+                // Parse JSON safely from response
+                const parsedData = extractAndParseJSON(rawText);
+                
+                if (!parsedData || !Array.isArray(parsedData.questions) || parsedData.questions.length === 0) {
+                    throw new Error("Format respons AI tidak memuat daftar soal yang valid. Silakan coba kembali.");
+                }
+
+                generatedQuestions = parsedData.questions;
+                renderExamDocument(parsedData, sources, {
+                    jenjang: "SMP / Sederajat (Matriks TKA Pusmendik)",
+                    domain: displayDomain,
+                    cognitiveLevel: cogProcLabel
+                });
+                
+                document.getElementById('btn-dl-all-tex').disabled = false;
+                document.getElementById('btn-export-pdf').disabled = false;
+                showStatus(`Berhasil menyusun <strong>${generatedQuestions.length} butir soal TKA</strong> sesuai Matriks Pusmendik lengkap dengan stimulus faktual dan kode LaTeX.`, 'success');
+
+            } catch (error) {
+                console.error("Generation Error:", error);
+                document.getElementById('empty-state').classList.remove('hidden');
+                showStatus(`Terjadi kendala saat menyusun soal: <strong>${error.message}</strong>. Silakan periksa kembali parameter atau coba ulangi.`, 'error');
+            } finally {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('btn-generate').disabled = false;
+            }
+        }
+
+        function extractAndParseJSON(text) {
+            try {
+                // Bersihkan markdown fence jika ada
+                let cleaned = text.trim();
+                const firstBrace = cleaned.indexOf('{');
+                const lastBrace = cleaned.lastIndexOf('}');
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+                }
+                return JSON.parse(cleaned);
+            } catch (e) {
+                console.error("JSON Parse fallback error:", e);
+                throw new Error("Gagal mem-parsing struktur data soal dari AI.");
+            }
+        }
+
+        // =========================================================================
+        // RENDERING ENGINE (HTML + SVG CHARTS + SMART TABLES + MATHJAX)
+        // =========================================================================
+        function parseMarkdownTablesInText(rawText) {
+            if (!rawText) return '';
+            const lines = rawText.split('\n');
+            let resultBlocks = [];
+            let i = 0;
+
+            while (i < lines.length) {
+                const line = lines[i].trim();
+                // Deteksi baris tabel markdown (mengandung | dan diikuti baris pemisah |---|)
+                if (line.startsWith('|') && line.endsWith('|') && i + 1 < lines.length && /^\|[\s\-:|]+\|$/.test(lines[i + 1].trim())) {
+                    const headers = line.slice(1, -1).split('|').map(h => h.trim());
+                    i += 2; // Lewati header dan garis pemisah
+                    const rows = [];
+                    while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+                        const rowCells = lines[i].trim().slice(1, -1).split('|').map(c => c.trim());
+                        rows.push(rowCells);
+                        i++;
+                    }
+                    resultBlocks.push(buildStyledTableHTML({ caption: null, headers, rows }));
+                } else {
+                    if (line.length > 0) {
+                        resultBlocks.push(`<p class="leading-relaxed text-justify">${line}</p>`);
+                    }
+                    i++;
+                }
+            }
+            return resultBlocks.join('\n');
+        }
+
+        function buildStyledTableHTML(tableObj) {
+            if (!tableObj || !Array.isArray(tableObj.headers) || tableObj.headers.length === 0) return '';
+            const captionHTML = tableObj.caption
+                ? `<div class="px-4 py-2 bg-slate-100/90 border-b border-slate-300 text-xs font-bold text-slate-800 flex items-center gap-2">
+                     <i class="fa-solid fa-table text-indigo-600"></i>
+                     <span>${tableObj.caption}</span>
+                   </div>`
+                : '';
+
+            const thHTML = tableObj.headers.map((h, idx) =>
+                `<th class="py-2.5 px-3.5 text-xs font-bold text-slate-800 border-r border-slate-300 last:border-r-0 ${idx === 0 ? 'text-left' : 'text-center'}">${h}</th>`
+            ).join('');
+
+            const trHTML = (tableObj.rows || []).map((row, rIdx) => {
+                const cells = row.map((cell, cIdx) =>
+                    `<td class="py-2 px-3.5 text-xs sm:text-[13px] text-slate-700 border-r border-slate-200 last:border-r-0 ${cIdx === 0 ? 'font-medium text-slate-900 text-left' : 'text-center font-mono'}">${cell}</td>`
+                ).join('');
+                return `<tr class="${rIdx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} border-b border-slate-200 last:border-b-0">${cells}</tr>`;
+            }).join('');
+
+            return `
+                <div class="my-3.5 overflow-x-auto rounded-xl border border-slate-300 shadow-2xs bg-white">
+                    ${captionHTML}
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-indigo-50/70 border-b border-slate-300">${thHTML}</tr>
+                        </thead>
+                        <tbody>${trHTML}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function buildSVGChartHTML(chart) {
+            if (!chart || !chart.type || chart.type === 'none' || !Array.isArray(chart.labels) || !Array.isArray(chart.values) || chart.values.length === 0) {
+                return '';
+            }
+
+            const labels = chart.labels;
+            const values = chart.values.map(v => Number(v) || 0);
+            const unit = chart.unit || '';
+            const title = chart.title || 'Grafik Data Stimulus';
+            const palette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+            let svgContent = '';
+
+            if (chart.type === 'pie') {
+                const total = values.reduce((a, b) => a + b, 0) || 1;
+                const cx = 135, cy = 105, r = 75;
+                let startAngle = -Math.PI / 2;
+
+                const slices = values.map((val, idx) => {
+                    const sliceAngle = (val / total) * 2 * Math.PI;
+                    const endAngle = startAngle + sliceAngle;
+                    const x1 = cx + r * Math.cos(startAngle);
+                    const y1 = cy + r * Math.sin(startAngle);
+                    const x2 = cx + r * Math.cos(endAngle);
+                    const y2 = cy + r * Math.sin(endAngle);
+                    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+                    const color = palette[idx % palette.length];
+                    const path = `M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
+                    startAngle = endAngle;
+                    return `<path d="${path}" fill="${color}" stroke="#ffffff" stroke-width="2"/>`;
+                }).join('');
+
+                const legends = labels.map((lbl, idx) => {
+                    const yPos = 35 + idx * 24;
+                    const color = palette[idx % palette.length];
+                    const pct = ((values[idx] / total) * 100).toFixed(1);
+                    return `
+                        <rect x="245" y="${yPos - 9}" width="12" height="12" rx="3" fill="${color}"/>
+                        <text x="264" y="${yPos}" font-size="11" fill="#334155" font-family="Inter, sans-serif" font-weight="500">${lbl}: ${values[idx]}${unit} (${pct}%)</text>
+                    `;
+                }).join('');
+
+                svgContent = `
+                    <svg viewBox="0 0 480 215" class="w-full max-w-lg mx-auto h-auto">
+                        ${slices}
+                        ${legends}
+                    </svg>
+                `;
+            } else {
+                // Bar atau Line Chart presisi
+                const W = 520, H = 230;
+                const padL = 55, padR = 25, padT = 25, padB = 45;
+                const plotW = W - padL - padR;
+                const plotH = H - padT - padB;
+                const maxVal = Math.max(...values, 1);
+                const niceMax = Math.ceil((maxVal * 1.15) / 5) * 5 || maxVal;
+                const gridSteps = 4;
+
+                let gridLines = '';
+                for (let g = 0; g <= gridSteps; g++) {
+                    const yVal = (niceMax / gridSteps) * g;
+                    const yPos = padT + plotH - (g / gridSteps) * plotH;
+                    gridLines += `
+                        <line x1="${padL}" y1="${yPos.toFixed(1)}" x2="${W - padR}" y2="${yPos.toFixed(1)}" stroke="#e2e8f0" stroke-dasharray="3,3" stroke-width="1"/>
+                        <text x="${padL - 8}" y="${(yPos + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#64748b" font-family="JetBrains Mono, monospace">${Number.isInteger(yVal) ? yVal : yVal.toFixed(1)}</text>
+                    `;
+                }
+
+                const stepX = plotW / labels.length;
+                let dataVisual = '';
+                let points = [];
+
+                labels.forEach((lbl, idx) => {
+                    const val = values[idx];
+                    const barH = (val / niceMax) * plotH;
+                    const centerX = padL + stepX * idx + stepX / 2;
+                    const yTop = padT + plotH - barH;
+                    points.push(`${centerX.toFixed(1)},${yTop.toFixed(1)}`);
+
+                    if (chart.type === 'bar') {
+                        const barW = Math.min(42, stepX * 0.55);
+                        dataVisual += `
+                            <rect x="${(centerX - barW / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="4" fill="${palette[idx % palette.length]}"/>
+                            <text x="${centerX.toFixed(1)}" y="${(yTop - 6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#1e293b" font-family="JetBrains Mono, monospace">${val}${unit}</text>
+                        `;
+                    }
+
+                    dataVisual += `
+                        <text x="${centerX.toFixed(1)}" y="${H - 22}" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155" font-family="Inter, sans-serif">${lbl}</text>
+                    `;
+                });
+
+                if (chart.type === 'line') {
+                    dataVisual += `<polyline fill="none" stroke="#4f46e5" stroke-width="2.5" points="${points.join(' ')}"/>`;
+                    points.forEach((pt, idx) => {
+                        const [px, py] = pt.split(',');
+                        dataVisual += `
+                            <circle cx="${px}" cy="${py}" r="4.5" fill="#ffffff" stroke="#4f46e5" stroke-width="2.5"/>
+                            <text x="${px}" y="${(Number(py) - 9).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#1e293b" font-family="JetBrains Mono, monospace">${values[idx]}${unit}</text>
+                        `;
+                    });
+                }
+
+                svgContent = `
+                    <svg viewBox="0 0 ${W} ${H}" class="w-full max-w-xl mx-auto h-auto">
+                        ${gridLines}
+                        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="#94a3b8" stroke-width="1.5"/>
+                        <line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="#94a3b8" stroke-width="1.5"/>
+                        ${dataVisual}
+                        ${chart.xAxisLabel ? `<text x="${padL + plotW / 2}" y="${H - 4}" text-anchor="middle" font-size="10" font-weight="600" fill="#64748b">${chart.xAxisLabel}</text>` : ''}
+                    </svg>
+                `;
+            }
+
+            return `
+                <div class="my-3.5 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                    <div class="text-center text-xs font-bold text-slate-800 mb-2 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i>
+                        <span>${title}</span>
+                    </div>
+                    ${svgContent}
+                </div>
+            `;
+        }
+
+        function formatRichContent(text) {
+            if (!text) return '';
+            return parseMarkdownTablesInText(text);
+        }
+
+        function getQuestionTypeBadge(type) {
+            if (type === 'PG') {
+                return `<span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Pilihan Ganda (PG)</span>`;
+            } else if (type === 'MCMA') {
+                return `<span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">PG Kompleks (MCMA)</span>`;
+            } else {
+                return `<span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Benar / Salah (3 Pernyataan)</span>`;
+            }
+        }
+
+        function renderExamDocument(data, sources, meta) {
+            // Render Sources
+            const sourcesBar = document.getElementById('sources-bar');
+            const sourcesList = document.getElementById('sources-list');
+            if (sources.length > 0) {
+                sourcesList.innerHTML = sources.slice(0, 6).map(s => `
+                    <a href="${s.uri}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-100 transition truncate max-w-xs">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <span class="truncate">${s.title}</span>
+                    </a>
+                `).join('');
+                sourcesBar.classList.remove('hidden');
+            } else {
+                sourcesBar.classList.add('hidden');
+            }
+
+            // Render Header Kop
+            const now = new Date();
+            document.getElementById('exam-date-meta').textContent = `Kode Paket: TKA-MTK-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('exam-header-title').textContent = data.examTitle || 'TES KEMAMPUAN AKADEMIK (TKA) - MATEMATIKA';
+            document.getElementById('exam-header-meta').innerHTML = `
+                <div><span class="font-semibold text-slate-800">Jenjang:</span> ${meta.jenjang.split('(')[0]}</div>
+                <div><span class="font-semibold text-slate-800">Domain:</span> ${meta.domain.split('(')[0]}</div>
+                <div><span class="font-semibold text-slate-800">Jumlah Butir:</span> ${data.questions.length} Soal</div>
+            `;
+
+            // Render Questions
+            const listContainer = document.getElementById('questions-list');
+            listContainer.innerHTML = data.questions.map((q, idx) => {
+                let bodyHTML = '';
+
+                if (q.type === 'PG' || q.type === 'MCMA') {
+                    const instruction = q.type === 'MCMA' 
+                        ? `<p class="text-xs font-semibold text-purple-700 italic mb-2.5">*Pilihlah lebih dari satu jawaban yang benar!</p>` 
+                        : '';
+                    const markerStyle = q.type === 'MCMA' ? 'rounded-md' : 'rounded-full';
+                    
+                    const optionsHTML = (q.options || []).map(opt => `
+                        <div class="flex items-start gap-3 p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 transition">
+                            <span class="w-7 h-7 ${markerStyle} bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                ${opt.label}
+                            </span>
+                            <div class="text-sm text-slate-800 leading-relaxed pt-0.5">${opt.text}</div>
+                        </div>
+                    `).join('');
+
+                    bodyHTML = `${instruction}<div class="grid grid-cols-1 gap-2 mt-3">${optionsHTML}</div>`;
+                } else if (q.type === 'BS3') {
+                    const rowsHTML = (q.statements || []).map((st, sIdx) => `
+                        <tr class="${sIdx % 2 === 1 ? 'bg-slate-50/60' : 'bg-white'} border-b border-slate-200 last:border-b-0">
+                            <td class="py-3 px-3 text-center font-bold text-xs text-slate-700 align-middle border-r border-slate-200">${st.no || sIdx + 1}</td>
+                            <td class="py-3 px-4 text-sm text-slate-800 leading-relaxed border-r border-slate-200">${st.text}</td>
+                            <td class="py-3 px-3 text-center align-middle border-r border-slate-200">
+                                <span class="inline-block w-5 h-5 rounded border-2 border-slate-400 bg-white"></span>
+                            </td>
+                            <td class="py-3 px-3 text-center align-middle">
+                                <span class="inline-block w-5 h-5 rounded border-2 border-slate-400 bg-white"></span>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    bodyHTML = `
+                        <p class="text-xs font-semibold text-amber-800 italic mb-2">*Tentukan Benar atau Salah untuk setiap pernyataan berikut berdasarkan stimulus!</p>
+                        <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-2xs mt-2">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 border-b border-slate-300 text-xs font-bold text-slate-800">
+                                        <th class="py-2.5 px-3 w-12 text-center border-r border-slate-300">No</th>
+                                        <th class="py-2.5 px-4 border-r border-slate-300">Pernyataan</th>
+                                        <th class="py-2.5 px-3 w-20 text-center border-r border-slate-300">Benar</th>
+                                        <th class="py-2.5 px-3 w-20 text-center">Salah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                const structuredTableHTML = q.stimulusTable ? buildStyledTableHTML(q.stimulusTable) : '';
+                const structuredChartHTML = q.stimulusChart ? buildSVGChartHTML(q.stimulusChart) : '';
+
+                return `
+                    <article class="question-card border border-slate-200 rounded-2xl p-5 sm:p-7 bg-white shadow-xs space-y-4">
+                        <!-- Top Bar Soal -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-3 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs">Soal No. ${q.number || idx + 1}</span>
+                                ${getQuestionTypeBadge(q.type)}
+                                <span class="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">${q.domain || ''}</span>
+                            </div>
+                            <div class="flex items-center gap-2 no-print">
+                                <button onclick="openLatexModal(${idx})" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition flex items-center gap-1.5" title="Lihat & Unduh Kode LaTeX Soal Ini">
+                                    <i class="fa-solid fa-code"></i>
+                                    <span>LaTeX</span>
+                                </button>
+                                <button onclick="downloadSingleLatex(${idx})" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1" title="Unduh Langsung File .tex">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>.tex</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stimulus Kontekstual (Narasi + Tabel Terstruktur + Grafik SVG) -->
+                        <div class="bg-slate-50/90 border-l-4 border-indigo-500 rounded-r-xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-700">
+                                <i class="fa-solid fa-newspaper"></i>
+                                <span>Stimulus: ${q.stimulusTitle || 'Konteks Faktual'}</span>
+                            </div>
+                            <div class="text-sm text-slate-700 space-y-2.5">
+                                ${formatRichContent(q.stimulusContent)}
+                            </div>
+                            ${structuredTableHTML}
+                            ${structuredChartHTML}
+                        </div>
+
+                        <!-- Pokok Soal (Stem) -->
+                        <div class="text-sm sm:text-[15px] font-semibold text-slate-900 leading-relaxed pt-1 space-y-2">
+                            ${formatRichContent(q.questionStem)}
+                        </div>
+
+                        <!-- Opsi / Pernyataan -->
+                        <div>
+                            ${bodyHTML}
+                        </div>
+
+                        <!-- Kunci Jawaban & Pembahasan -->
+                        <div class="solution-box ${showSolutions ? '' : 'hidden'} mt-4 pt-4 border-t border-dashed border-slate-300 bg-emerald-50/50 rounded-xl p-4 sm:p-5 space-y-2.5">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-key text-emerald-600"></i>
+                                    Kunci Jawaban: <span class="px-2.5 py-0.5 bg-emerald-600 text-white rounded text-xs ml-1 font-mono">${q.correctAnswer}</span>
+                                </span>
+                                <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-white border border-emerald-200 text-emerald-800">${q.cognitiveLevel || ''}</span>
+                            </div>
+                            ${q.competencyIndicator ? `<div class="text-[11px] text-slate-600 bg-white/90 px-3 py-1.5 rounded-lg border border-slate-200/80"><strong class="text-slate-800">Indikator Matriks TKA:</strong> ${q.competencyIndicator}</div>` : ''}
+                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-1 space-y-1.5">
+                                <strong class="text-slate-900 block">Pembahasan Sistematis:</strong>
+                                <div class="space-y-1.5">${formatRichContent(q.explanation)}</div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            document.getElementById('exam-container').classList.remove('hidden');
+
+            // Trigger MathJax Re-typeset
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([document.getElementById('printable-area')]).catch(err => console.warn('MathJax typeset warning:', err));
+            }
+        }
+
+        // =========================================================================
+        // LATEX GENERATOR ENGINE (PER SOAL & PAKET LENGKAP)
+        // =========================================================================
+        function buildLatexTableFromObject(tbl) {
+            if (!tbl || !Array.isArray(tbl.headers) || tbl.headers.length === 0) return '';
+            const colSpec = '|' + tbl.headers.map((_, i) => i === 0 ? 'l' : 'c').join('|') + '|';
+            let tex = `\n\\begin{center}\n`;
+            if (tbl.caption) {
+                tex += `\\textbf{\\small ${escapeLatexText(tbl.caption)}}\\\\[4pt]\n`;
+            }
+            tex += `\\begin{tabular}{${colSpec}}\n\\hline\n`;
+            tex += tbl.headers.map(h => `\\textbf{${h}}`).join(' & ') + ` \\\\\n\\hline\n`;
+            (tbl.rows || []).forEach(r => {
+                tex += r.join(' & ') + ` \\\\\n\\hline\n`;
+            });
+            tex += `\\end{tabular}\n\\end{center}\n`;
+            return tex;
+        }
+
+        function buildLatexChartSummaryFromObject(chart) {
+            if (!chart || !chart.type || chart.type === 'none' || !Array.isArray(chart.labels)) return '';
+            const rows = chart.labels.map((lbl, i) => [lbl, `${chart.values[i]}${chart.unit || ''}`]);
+            return buildLatexTableFromObject({
+                caption: `Data Grafik: ${chart.title || 'Visualisasi Stimulus'}`,
+                headers: [chart.xAxisLabel || 'Kategori', chart.yAxisLabel || 'Nilai'],
+                rows
+            });
+        }
+
+        function buildSingleQuestionLatexBody(q, index) {
+            const num = q.number || (index + 1);
+            const typeLabel = q.type === 'PG' ? 'Pilihan Ganda' : (q.type === 'MCMA' ? 'Pilihan Ganda Kompleks (MCMA)' : 'Benar / Salah (3 Pernyataan)');
+            
+            let latex = `% ============================================================\n`;
+            latex += `% SOAL NOMOR ${num} | TIPE: ${typeLabel} | DOMAIN: ${q.domain || '-'}\n`;
+            latex += `% ============================================================\n`;
+            latex += `\\noindent\\textbf{Soal No. ${num}} \\hfill \\textit{[${typeLabel} -- ${q.cognitiveLevel || 'TKA'}]}\\\\[4pt]\n`;
+            
+            // Stimulus Box (termasuk tabel & data grafik terstruktur jika ada)
+            latex += `\\begin{tcolorbox}[colback=gray!6, colframe=blue!60!black, title=\\textbf{Stimulus: ${escapeLatexText(q.stimulusTitle || 'Konteks Faktual')}}, fonttitle=\\small]\n`;
+            latex += `${q.stimulusContent}\n`;
+            if (q.stimulusTable) {
+                latex += buildLatexTableFromObject(q.stimulusTable);
+            }
+            if (q.stimulusChart && q.stimulusChart.type !== 'none') {
+                latex += buildLatexChartSummaryFromObject(q.stimulusChart);
+            }
+            latex += `\\end{tcolorbox}\n\n`;
+
+            // Question Stem
+            latex += `${q.questionStem}\n\n`;
+
+            // Options or Statements
+            if (q.type === 'PG' || q.type === 'MCMA') {
+                if (q.type === 'MCMA') {
+                    latex += `\\textit{(Pilihlah lebih dari satu jawaban yang benar!)}\n`;
+                }
+                latex += `\\begin{enumerate}[label=\\textbf{\\Alph*.}, leftmargin=1.5em, itemsep=3pt]\n`;
+                (q.options || []).forEach(opt => {
+                    latex += `    \\item ${opt.text}\n`;
+                });
+                latex += `\\end{enumerate}\n\n`;
+            } else if (q.type === 'BS3') {
+                latex += `\\textit{(Tentukan Benar atau Salah untuk setiap pernyataan berikut!)}\\\\[6pt]\n`;
+                latex += `\\begin{tabularx}{\\textwidth}{|c|X|c|c|}\n`;
+                latex += `    \\hline\n`;
+                latex += `    \\textbf{No.} & \\textbf{Pernyataan} & \\textbf{Benar} & \\textbf{Salah} \\\\\n`;
+                latex += `    \\hline\n`;
+                (q.statements || []).forEach((st, sIdx) => {
+                    latex += `    ${st.no || sIdx + 1} & ${st.text} & $\\square$ & $\\square$ \\\\\n`;
+                    latex += `    \\hline\n`;
+                });
+                latex += `\\end{tabularx}\n\n`;
+            }
+
+            // Kunci & Pembahasan
+            latex += `\\begin{tcolorbox}[colback=green!5, colframe=green!50!black, title=\\textbf{Kunci Jawaban \\& Pembahasan Soal No. ${num}}, fonttitle=\\small]\n`;
+            latex += `\\textbf{Kunci Jawaban:} ${q.correctAnswer}\\\\[4pt]\n`;
+            latex += `\\textbf{Pembahasan:}\\\\\n${q.explanation}\n`;
+            latex += `\\end{tcolorbox}\n\n`;
+
+            return latex;
+        }
+
+        function wrapWithLatexDocument(bodyContent, title = "Naskah Soal TKA Matematika") {
+            return `\\documentclass[11pt,a4paper]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage[indonesian]{babel}
+\\usepackage{amsmath, amssymb, amsfonts}
+\\usepackage{geometry}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\usepackage{tcolorbox}
+\\usepackage{xcolor}
+
+\\geometry{margin=2cm}
+\\tcbuselibrary{skins, breakable}
+
+\\title{\\textbf{${escapeLatexText(title)}}}
+\\author{Disusun dengan TKA Math Studio AI}
+\\date{\\today}
+
+\\begin{document}
+\\maketitle
+\\hrule
+\\vspace{1em}
+
+${bodyContent}
+\\end{document}`;
+        }
+
+        function escapeLatexText(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '\\&').replace(/%/g, '\\%').replace(/#/g, '\\#');
+        }
+
+        function openLatexModal(index) {
+            const q = generatedQuestions[index];
+            if (!q) return;
+            currentModalQuestionIndex = index;
+            const standaloneTex = wrapWithLatexDocument(
+                buildSingleQuestionLatexBody(q, index),
+                `Soal TKA Matematika No. ${q.number || index + 1}`
+            );
+            document.getElementById('modal-latex-title').textContent = `Kode LaTeX — Soal No. ${q.number || index + 1} (${q.type})`;
+            document.getElementById('modal-latex-code').textContent = standaloneTex;
+            document.getElementById('latex-modal').classList.remove('hidden');
+        }
+
+        function closeLatexModal() {
+            document.getElementById('latex-modal').classList.add('hidden');
+        }
+
+        function copyModalLatex() {
+            const code = document.getElementById('modal-latex-code').textContent;
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const feedback = document.getElementById('copy-feedback');
+            feedback.classList.remove('opacity-0');
+            setTimeout(() => feedback.classList.add('opacity-0'), 2500);
+        }
+
+        function downloadModalLatex() {
+            if (currentModalQuestionIndex !== null) {
+                downloadSingleLatex(currentModalQuestionIndex);
+            }
+        }
+
+        function downloadSingleLatex(index) {
+            const q = generatedQuestions[index];
+            if (!q) return;
+            const fullTex = wrapWithLatexDocument(
+                buildSingleQuestionLatexBody(q, index),
+                `Soal TKA Matematika No. ${q.number || index + 1}`
+            );
+            triggerFileDownload(fullTex, `Soal_TKA_Matematika_No_${q.number || index + 1}_${q.type}.tex`, 'application/x-tex');
+        }
+
+        function downloadAllLatex() {
+            if (generatedQuestions.length === 0) return;
+            const allBodies = generatedQuestions.map((q, idx) => buildSingleQuestionLatexBody(q, idx)).join('\n\\newpage\n\n');
+            const title = document.getElementById('exam-header-title').textContent;
+            const fullTex = wrapWithLatexDocument(allBodies, title);
+            triggerFileDownload(fullTex, `Paket_Lengkap_Soal_TKA_Matematika.tex`, 'application/x-tex');
+        }
+
+        function triggerFileDownload(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // =========================================================================
+        // EXPORT PDF ENGINE
+        // =========================================================================
+        async function exportToPDF() {
+            if (generatedQuestions.length === 0) return;
+            const element = document.getElementById('printable-area');
+            const btn = document.getElementById('btn-export-pdf');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Memproses PDF...</span>`;
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: 'Naskah_Soal_TKA_Matematika.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            try {
+                await html2pdf().set(opt).from(element).save();
+                showStatus('Dokumen PDF berhasil diunduh ke perangkat Anda.', 'success');
+            } catch (err) {
+                console.warn('html2pdf fallback ke window.print:', err);
+                window.print();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+    </script>
+</body>
+</html>
